@@ -40,18 +40,42 @@ const SUB_ID = "--MHX-FACEBOOK--";
 async function resolveLink(rawLink) {
     let url = rawLink.replace(/[.,!?]$/, "");
     if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+
     try {
         const r = await axios.get(url, {
-            maxRedirects: 10, timeout: 5000, validateStatus: null,
+            maxRedirects: 10,
+            timeout: 5000,
+            validateStatus: null,
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
         });
-        const final = r.request.res.responseUrl || url;
-        if (final.includes('shopee.vn')) {
-            let pure = final.split('?')[0];
-            pure = pure.replace(/shopee\.vn\/[^\/]+\/(\d+)\/(\d+)/i, 'shopee.vn/product/$1/$2');
+
+        let final = r.request.res.responseUrl || url;
+
+        // Tối ưu Regex: Tìm cặp số ShopID và ItemID trong mọi cấu trúc Shopee
+        // Dạng 1: -i.123.456 (Link có slug tiếng Việt hoặc tên ngắn)
+        // Dạng 2: /product/123/456 (Link chuẩn product)
+        const match = final.match(/-i\.(\d+)\.(\d+)/) || final.match(/\/product\/(\d+)\/(\d+)/);
+
+        if (match) {
+            const shopId = match[1];
+            const itemId = match[2];
+            
+            // Tạo link sạch chuẩn 100% không chứa rác
+            const pure = `https://shopee.vn/product/${shopId}/${itemId}`;
+            
+            // Trả về link đã được encode để đưa vào origin_link
             return encodeURIComponent(pure);
         }
-    } catch { return null; }
+
+        // Trường hợp sơ cua nếu không khớp regex trên (ví dụ link flash sale hoặc link đặc biệt)
+        // Ta lấy phần trước dấu hỏi chấm để bỏ các tham số utm_...
+        const cleanFinal = final.split('?')[0];
+        return encodeURIComponent(cleanFinal);
+
+    } catch (e) {
+        console.error("Lỗi xử lý link:", e.message);
+        return null;
+    }
 }
 
 
