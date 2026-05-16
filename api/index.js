@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // ════════════════════════════════════════════════════
-//  2 KV KEY độc lập — lỗi 1 cái không ảnh hưởng cái kia
+//  2 KV KEY độc lập — lỗi 1 cái không ảnh hưởng cái kia (back)
 // ════════════════════════════════════════════════════
 const KV_AFFILIATE = 'app_config';
 const KV_COOKIE    = 'app_config_cookie';
